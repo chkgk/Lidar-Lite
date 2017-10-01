@@ -25,8 +25,9 @@ class Lidar_Lite():
     time.sleep(0.02)
 
   def readAndWait(self, register):
-    res = self.bus.read_byte_data(self.address, register)
-    time.sleep(0.02)
+    self.bus.write_byte(self.address, register)
+    res = self.bus.read_byte(self.address)
+    # time.sleep(0.02)
     return res
 
   def getDistance(self):
