@@ -4,9 +4,11 @@ import time
 class Lidar_Lite():
   def __init__(self):
     self.address = 0x62
+    self.measureCount = 0
     self.distWriteReg = 0x00
-    self.distWriteVal = 0x04
-    self.distReadReg1 = 0x8f
+    self.distWriteVal = 0x03
+    self.distWriteRBC = 0x04
+    self.distReadReg1 = 0x0f
     self.distReadReg2 = 0x10
     self.velWriteReg = 0x04
     self.velWriteVal = 0x08
@@ -31,13 +33,20 @@ class Lidar_Lite():
     return res
 
   def getDistance(self):
-    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    if self.measureCount % 100 == 0:
+        self.writeAndWait(self.distWriteReg, self.distWriteRBC)
+    else:
+        self.writeAndWait(self.distWriteReg, self.distWriteVal)
     dist1 = self.readAndWait(self.distReadReg1)
     dist2 = self.readAndWait(self.distReadReg2)
+    self.count += 1
     return (dist1 << 8) + dist2
 
   def getVelocity(self):
-    self.writeAndWait(self.distWriteReg, self.distWriteVal)
+    # Not true velocity, just difference between current distance and previous distance.
+    # Use free running mode to get a proper velocity measurement.
+    # (i.e. free running mode at 10 Hz results in velocity measurements in 0.1 m/s)
+    self.getDistance(self)
     self.writeAndWait(self.velWriteReg, self.velWriteVal)
     vel = self.readAndWait(self.velReadReg)
     return self.signedInt(vel)
